@@ -5,6 +5,7 @@ require "nmi/version"
 require "loader"
 require "constants"
 
+
 module Nmi
   class << self
     def log *args
