@@ -94,14 +94,13 @@ module Nmi
       # Login Information
       query = query + "username=" + URI.escape(@login['username']) + "&"
       query += "password=" + URI.escape(@login['password']) + "&"
-      # Order Information
+      # Billing, Shippng & Order Information
       all_details = @billing.merge(@shipping).merge(@order)
       all_details.each do |key,value|
         query += key.to_s + "=" + URI.escape(value) + "&"
       end
       
       puts query.inspect
-      #exit
       return query
     end
 
