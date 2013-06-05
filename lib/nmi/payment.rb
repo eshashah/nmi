@@ -1,10 +1,3 @@
-require 'curb'
-require 'uri'
-require 'nokogiri'
-require 'addressable/uri'
-require "net/https"
-require 'openssl'
-
 module Nmi
   class Payment
 
@@ -77,18 +70,11 @@ module Nmi
       query = query + "username=" + URI.escape(@login['username']) + "&"
       query += "password=" + URI.escape(@login['password']) + "&"
       query += "transaction_id=" + transaction_id.to_s
-      return doqyery(query)
+      return doquery(query)
     end
 
-    def doqyery(query)
-      url = URI.parse "https://secure.nmi.com/api/query.php?#{query}"
-      http = Net::HTTP.new(url.host, url.port)
-      http.use_ssl = true# if url.scheme == "https"
-      http.ssl_version = :SSLv3
-      http.verify_mode = OpenSSL::SSL::VERIFY_PEER
-      request = Net::HTTP::Get.new("https://secure.nmi.com/api/query.php?#{query}")
-      data = http.request(request)
-      data = data.body
+    def doquery(query)
+      data = build_http_request(QUERY,query)
       val = Hash.from_xml(data)
       return val
     end
@@ -108,37 +94,35 @@ module Nmi
       # Login Information
       query = query + "username=" + URI.escape(@login['username']) + "&"
       query += "password=" + URI.escape(@login['password']) + "&"
-      
       # Order Information
-      @order.each do |key,value|
+      all_details = @billing.merge(@shipping).merge(@order)
+      all_details.each do |key,value|
         query += key.to_s + "=" + URI.escape(value) + "&"
       end
-
-      # Billing Information
-      @billing.each do | key,value|
-        query += key.to_s + "=" + URI.escape(value) + "&"
-      end
-
-      # Shipping Information
-      @shipping.each do | key,value|
-        query += key.to_s + "=" + URI.escape(value) + "&"
-      end
+      
+      puts query.inspect
+      #exit
       return query
     end
 
     def doPost(query)
-      url = URI.parse "https://secure.nmi.com/api/transact.php?#{query}"
-      http = Net::HTTP.new(url.host, url.port)
-      http.use_ssl = true# if url.scheme == "https"
-      http.ssl_version = :SSLv3
-      http.verify_mode = OpenSSL::SSL::VERIFY_PEER
-      request = Net::HTTP::Get.new("https://secure.nmi.com/api/transact.php?#{query}")
-      data = http.request(request)
-      data =  data.body
+      data = build_http_request(TRANSACTION_QUETRY,query)
       data = '"https://secure.nmi.com/api/transact.php?' + data
       uri = Addressable::URI.parse(data)
       @responses = uri.query_values
       return @responses['response']
+    end
+
+    def build_http_request(query,data_string)
+      url = URI.parse "#{query}?#{data_string}"
+      http = Net::HTTP.new(url.host, url.port)
+      http.use_ssl = true# if url.scheme == "https"
+      http.ssl_version = :SSLv3
+      http.verify_mode = OpenSSL::SSL::VERIFY_PEER
+      request = Net::HTTP::Get.new("#{query}?#{data_string}")
+      data = http.request(request)
+      data =  data.body
+      return data
     end
 
     def getResponses()

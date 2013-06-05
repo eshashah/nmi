@@ -2,6 +2,8 @@ require "nmi/configuration"
 require "nmi/payment"
 require "nmi/payment_error"
 require "nmi/version"
+require "loader"
+require "constants"
 
 module Nmi
   class << self
